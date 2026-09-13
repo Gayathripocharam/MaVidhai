@@ -1,124 +1,364 @@
-# MaVidhai
+# 🛍️ MaVidhai
 
-MaVidhai is a full-stack, transactional e-commerce platform demonstrating secure, server‑authoritative commerce flows, robust payment state machines, and AI-driven features.
+### AI-Powered E-Commerce Platform
 
-This project was built as an internship showcase, prioritizing engineering depth, architectural integrity, and end-to-end user journeys over simple frontend scaffolding.
+**MaVidhai** is a modern full-stack e-commerce platform that combines seamless online shopping, AI-powered assistance, multilingual experiences, and WhatsApp-driven payments into one unified platform.
 
-## 1. Project Overview
-MaVidhai provides a complete modern e-commerce experience. It isolates users via JWT authentication, drives all pricing and stock logic authoritatively from the backend, and handles complex asynchronous flows like payment processing via WhatsApp and AI chatbot interactions.
+<p align="center">
+  <strong>Discover products • Shop smarter • Get AI assistance • Pay through WhatsApp</strong>
+</p>
 
-## 2. Key Features
-- **Secure Commerce Flows**: Full catalog, cart, and wishlist functionality with server-enforced pricing and inventory rules.
-- **WhatsApp Payments**: Provider-agnostic payment architecture integrated deeply with WhatsApp for seamless checkouts.
-- **AI Chatbot**: Gemini-powered conversational assistant to help users navigate and query products.
-- **Internationalization**: Integrated language selection and translation.
-- **Robust State Management**: Immutable order history and PostgreSQL-backed cart/wishlist persistence.
-- **Admin Dashboard**: Analytics and vendor tools to manage the platform.
+<p align="center">
 
-## 3. Architecture
-MaVidhai is designed as a modular monorepo.
-- The **Frontend** is a React/Next.js application responsible for UI, routing, and client-side state.
-- The **Backend** is a FastAPI/Python service responsible for business logic, database transactions, and integrations (AI, WhatsApp, Payments).
-- The **Database** is PostgreSQL, using Alembic for schema migrations and SQLAlchemy for ORM.
+![Status](https://img.shields.io/badge/status-Release%20Candidate-orange)
+![Tests](https://img.shields.io/badge/tests-92%2F92-success)
+![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?logo=postgresql)
+![Gemini](https://img.shields.io/badge/Gemini-AI-4285F4)
 
-## 4. Tech Stack
-- **Frontend**: Next.js 16 (App Router), React, TailwindCSS
-- **Backend**: FastAPI, Python, SQLAlchemy, Alembic
-- **Database**: PostgreSQL
-- **Integrations**: Google Gemini API (AI Chatbot), WhatsApp API (Payments)
+</p>
 
-## 5. User Journey
-1. **Discovery**: Users browse the catalog, utilize the search function, or ask the AI Chatbot for recommendations.
-2. **Selection**: Items are added to the persistent cart or saved to the wishlist.
-3. **Checkout**: Upon checking out, the backend calculates authoritative pricing, reserves stock, and creates an immutable order snapshot.
-4. **Payment**: The order enters a `pending` state and hands off to the WhatsApp payment architecture.
-5. **Fulfillment**: A webhook confirms payment, updating the order to `paid` and finalizing the transaction.
+---
 
-## 6. Payment Architecture — WhatsApp
-MaVidhai uses a generic, provider-agnostic `PaymentProvider` abstraction. The current production adapter routes payments through **WhatsApp**. 
+<p align="center">
+  <em>(📸 Product screenshot placeholder - Add actual UI screenshot here)</em>
+</p>
 
-- **Checkout Polling**: The frontend seamlessly polls the backend for payment status updates.
-- **Webhook Idempotency**: The backend enforces idempotent, signature-verified webhooks to ensure payments cannot be double-counted or forged.
-- **Captured → Failed Protection**: Strict state machine rules prevent a successful payment from being overridden by a delayed failure webhook.
-- **Cross-Order Protection**: Payments are strictly correlated to specific `order_id`s.
+---
 
-*(Note: Real external-provider staging validation is the final remaining production gate before live deployment.)*
+## ✨ What is MaVidhai?
 
-## 7. AI Chatbot
-MaVidhai features an integrated AI Chatbot powered by the Google Gemini API. It provides a conversational interface for users to find products, get styling advice, or ask questions about the platform, directly integrated into the main navigation layout.
+MaVidhai is a full-stack commerce platform designed to provide a smooth shopping experience from product discovery to order completion.
 
-## 8. Frontend/Backend Structure
+The platform brings together:
+
+* 🛍️ Product discovery and search
+* 🛒 Smart cart and wishlist
+* 📦 Inventory-aware ordering
+* 💳 WhatsApp-driven payments
+* 🤖 Gemini-powered AI assistant
+* 🌐 Multilingual support
+* 👤 Authentication and user profiles
+* 📋 Order tracking and history
+
+The application is built as a unified monorepo with a **Next.js frontend**, **FastAPI backend**, and **PostgreSQL database**.
+
+---
+
+## 🚀 Features
+
+### 🛍️ Shopping Experience
+
+* Product search
+* Category and price filtering
+* Product availability tracking
+* Stock-aware quantity selection
+* Quick Add to Cart
+* Wishlist
+* Responsive product pages
+* Order history and order details
+
+### 🤖 AI Assistant
+
+MaVidhai includes a Gemini-powered AI assistant integrated directly into the application.
+
+The assistant provides a conversational interface that can help users interact with and navigate the platform.
+
+### 💬 WhatsApp Payments
+
+MaVidhai uses a provider-agnostic payment architecture with WhatsApp as the payment handoff channel.
+
+```text
+Checkout
+   ↓
+Create Order
+   ↓
+Create Payment
+   ↓
+WhatsApp Payment Handoff
+   ↓
+External Payment Provider
+   ↓
+Verified Webhook
+   ↓
+Payment Captured
+   ↓
+Inventory Updated
+   ↓
+Order Confirmed
+```
+
+The payment system includes:
+
+* Provider abstraction
+* Webhook signature verification
+* Idempotent webhook processing
+* Payment/order correlation
+* Cross-order protection
+* Inventory conflict handling
+* Checkout payment polling
+
+> Real external-provider staging validation is the remaining gate before production release.
+
+### 🌐 Multilingual Experience
+
+The frontend includes centralized language management and translation support, allowing the interface to adapt to supported languages.
+
+---
+
+## 🎯 Why MaVidhai?
+
+MaVidhai is designed around a simple idea:
+
+> **Make digital commerce more intelligent, conversational, and accessible.**
+
+Instead of treating shopping, customer assistance, and payments as separate experiences, MaVidhai brings them together into a single platform.
+
+---
+
+## 🏗️ Architecture
+
+```text
+                    ┌──────────────────────┐
+                    │      MaVidhai        │
+                    │     Web Platform     │
+                    └──────────┬───────────┘
+                               │
+                 ┌─────────────┴─────────────┐
+                 │                           │
+          ┌──────▼──────┐             ┌──────▼──────┐
+          │  Next.js    │             │   FastAPI   │
+          │  Frontend   │◄───────────►│   Backend   │
+          └─────────────┘             └──────┬──────┘
+                                             │
+                                    ┌────────▼────────┐
+                                    │   PostgreSQL     │
+                                    └─────────────────┘
+                                             │
+                    ┌────────────────────────┼──────────────────────┐
+                    │                        │                      │
+             ┌──────▼──────┐         ┌──────▼──────┐       ┌──────▼──────┐
+             │    Gemini   │         │  WhatsApp   │       │   Payment   │
+             │     AI      │         │ Integration │       │   Provider  │
+             └─────────────┘         └─────────────┘       └─────────────┘
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer           | Technology                      |
+| --------------- | ------------------------------- |
+| Frontend        | Next.js, React                  |
+| Styling         | Tailwind CSS                    |
+| Backend         | FastAPI                         |
+| ORM             | SQLAlchemy                      |
+| Validation      | Pydantic                        |
+| Database        | PostgreSQL                      |
+| Migrations      | Alembic                         |
+| AI              | Google Gemini                   |
+| Payments        | Provider abstraction + WhatsApp |
+| Testing         | Pytest                          |
+| Version Control | Git / GitHub                    |
+
+---
+
+## 📂 Project Structure
+
 ```text
 MaVidhai/
-├── src/                # Next.js frontend (App Router, Components, Hooks)
-├── backend/            # FastAPI backend (Routes, Models, Schemas, Services)
-├── team-projects/      # Additional contributor projects (IntelliAssist-AI, plantpulse-app)
-├── public/             # Static frontend assets
-└── package.json        # Frontend dependencies
+│
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── context/
+│   └── hooks/
+│
+├── backend/
+│   ├── app/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── database/
+│   │
+│   ├── migrations/
+│   ├── tests/
+│   └── scripts/
+│
+├── team-projects/
+│   ├── sameer/
+│   │   └── IntelliAssist-AI/
+│   └── bharath/
+│       └── plantpulse-app/
+│
+├── docs/
+│
+├── package.json
+└── README.md
 ```
 
-## 9. Local Setup
+---
 
-### Backend (Python)
+## ⚡ Getting Started
+
+### 1. Clone the repository
+
 ```bash
-cd backend
-python -m venv .venv
-# Activate virtual environment
-source .venv/bin/activate      # Linux/Mac
-.\.venv\Scripts\activate       # Windows
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload
+git clone https://github.com/Gayathripocharam/MaVidhai.git
+cd MaVidhai
 ```
 
-### Frontend (Next.js)
+### 2. Start the frontend
+
 ```bash
-# From the repository root
 npm install
 npm run dev
 ```
 
-## 10. Environment Variables
-You need to configure environment variables for both the frontend and backend.
-- **Backend**: See `backend/.env.example`. Requires Database URL, JWT secret, and WhatsApp webhook secrets.
-- **Frontend**: See `.env.local.example`. Requires API URLs and `GEMINI_API_KEY`.
+### 3. Start the backend
 
-## 11. Testing
-The backend is verified by a comprehensive automated test suite (92 tests) covering critical paths, state transitions, concurrency, and security boundaries.
+```bash
+cd backend
+
+python -m venv .venv
+```
+
+Windows:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+### 4. Configure environment variables
+
+Create the required local environment configuration using the provided example configuration.
+
+Never commit:
+
+* API keys
+* access tokens
+* database credentials
+* `.env` files
+* private secrets
+
+---
+
+## 🧪 Testing
+
+Backend tests:
 
 ```bash
 cd backend
 pytest -q
 ```
 
-## 12. Deployment
-- **Frontend**: Configured for Vercel deployment.
-- **Backend**: Configured for Render deployment (`render.yaml` provided).
-- **Database**: Managed PostgreSQL instance (e.g., Supabase, Neon).
+Current RC1 result:
 
-## 13. Project Status / Release Status
-| Gate                             | Status |
-| -------------------------------- | ------ |
-| Unified frontend integration     | ✅ |
-| Backend API baseline             | ✅ |
-| AI chatbot integration           | ✅ |
-| WhatsApp payment architecture    | ✅ |
-| Payment security tests           | ✅ |
-| Backend regression (92/92)       | ✅ |
-| Production frontend build        | ✅ |
-| External payment provider staging| ⏳ |
+```text
+92 passed
+```
 
-## 14. Team / Contributors
-Built collaboratively by the MaVidhai team:
-- **Gayathri Pocharam** (Architecture & Core Backend)
-- **Sukriti** (Frontend UI/UX)
-- **Sameer** (AI Integrations)
-- **Bharath** (Commerce Features)
+Frontend validation:
 
-*(Additional team projects can be found in the `team-projects/` directory.)*
+```bash
+npm run lint
+npm run build
+```
 
-## 15. Future Roadmap
-- Execute real staging payment webhook validation.
-- Migrate JWT authentication from `localStorage` to `HttpOnly` cookies.
-- Enhance real-time inventory tracking and concurrency control.
-- Finalize production deployment to Vercel/Render.
+---
+
+## 📊 Project Status
+
+**v1.0.0-rc1 — Release Candidate**
+
+| Component                     | Status        |
+| ----------------------------- | ------------- |
+| Frontend                      | 🟢 Complete   |
+| Backend                       | 🟢 Complete   |
+| Database                      | 🟢 Validated  |
+| AI Assistant                  | 🟢 Integrated |
+| WhatsApp Payment Architecture | 🟢 Validated  |
+| Automated Tests               | 🟢 92/92      |
+| Production Build              | 🟢 Passing    |
+| External Payment Staging      | 🟡 Pending    |
+
+---
+
+## 👥 Team Projects
+
+The repository also contains supporting projects contributed by team members:
+
+### IntelliAssist-AI
+
+AI assistant project contributed by the team.
+
+### plantpulse-app
+
+AI-based crop disease detection application focused on disease prediction, confidence scoring, and treatment recommendations.
+
+These projects are maintained under `team-projects/` and remain separate from the MaVidhai core application.
+
+---
+
+## 🗺️ Roadmap
+
+* [x] Unified frontend and backend
+* [x] Product discovery and shopping
+* [x] Cart and wishlist
+* [x] Order management
+* [x] AI assistant
+* [x] Multilingual support
+* [x] WhatsApp payment architecture
+* [x] Payment security hardening
+* [x] RC1 integration testing
+* [ ] Real external payment-provider staging validation
+* [ ] Production deployment
+* [ ] Advanced vendor/admin capabilities
+* [ ] Further AI-powered commerce features
+
+---
+
+## 📄 Documentation
+
+Additional technical and release documentation is available in:
+
+```text
+docs/
+├── release/
+│   ├── rc1_release_notes.md
+│   └── whatsapp-payment-release-evidence.md
+```
+
+---
+
+## ⭐ Contributing
+
+Contributions, suggestions, and improvements are welcome.
+
+For larger changes, please open an issue or discussion before submitting a pull request.
+
+---
+
+## 📜 License
+
+See the `LICENSE` file for licensing information.
+
+---
+
+<p align="center">
+  Built with ❤️ by the MaVidhai Team
+</p>
