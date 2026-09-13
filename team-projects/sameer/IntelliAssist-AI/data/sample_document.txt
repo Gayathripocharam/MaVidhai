@@ -1,0 +1,11 @@
+Artificial Intelligence is a branch of computer science that focuses on creating systems capable of performing tasks that normally require human intelligence.
+
+Machine learning is a subset of artificial intelligence. It allows computers to learn patterns from data and make predictions or decisions without being explicitly programmed for every situation.
+
+Natural Language Processing, commonly known as NLP, enables computers to understand, process, and generate human language.
+
+Retrieval-Augmented Generation, or RAG, combines information retrieval with generative AI. A RAG system first retrieves relevant information from a knowledge source and then uses that information to generate a more accurate response.
+
+Vector databases can be used to store numerical representations of text called embeddings. These representations allow systems to search for information based on similarity.
+
+Streamlit is a Python framework that makes it possible to create interactive web applications quickly.
