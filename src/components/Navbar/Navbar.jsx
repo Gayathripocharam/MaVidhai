@@ -43,40 +43,37 @@ const SEARCH_CONFIG = {
 
 export default function Navbar() {
   const router = useRouter();
+  const { language, changeLanguage, languages } = useLanguage();
+  const { t } = useTranslation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [languageOpen, setLanguageOpen] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
   const [cartCount, setCartCount] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(null);
+  const [languageOpen, setLanguageOpen] = useState(false);
 
-  const { language, changeLanguage, languages } = useLanguage();
-  const { t } = useTranslation(["Home", "Shop", "Categories", "About"]);
-
-  /*
-   * Read the logged‑in user from localStorage.
-   */
+  // Load logged‑in user from localStorage
   const loadUser = () => {
     const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
-
     if (!storedUser) {
       setUser(null);
+      setIsAuth(false);
       return;
     }
-
     try {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
+      setIsAuth(true);
     } catch (error) {
       console.error("Invalid stored user data:", error);
       localStorage.removeItem(AUTH_STORAGE_KEY);
       setUser(null);
+      setIsAuth(false);
     }
   };
 
-  /*
-   * Load cart & wishlist counts using the backend API.
-   */
+  // Load cart & wishlist counts via backend API
   const loadCounts = async () => {
     const token = getAuthToken();
     if (!token) {
@@ -84,14 +81,12 @@ export default function Navbar() {
       setWishlistCount(null);
       return;
     }
-
     try {
       const cart = await getCart();
       setCartCount(cart.item_count);
     } catch (err) {
       if (err.message === "Unauthorized") setAuthToken(null);
     }
-
     try {
       const wishlist = await getWishlist();
       setWishlistCount(wishlist.count);
@@ -100,13 +95,10 @@ export default function Navbar() {
     }
   };
 
-  /*
-   * Load user and counts when Navbar mounts.
-   * Listen for auth, cart, and wishlist changes.
-   * Load user when Navbar first appears
-   * and listen for login/logout changes.
-   */
-  useEffect(() => {
+  // Initialise and subscribe to auth / cart / wishlist events
+
+useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadUser();
     loadCounts();
 
@@ -114,14 +106,8 @@ export default function Navbar() {
       loadUser();
       loadCounts();
     };
-
-    const handleCartUpdate = () => {
-      loadCounts();
-    };
-
-    const handleWishlistUpdate = () => {
-      loadCounts();
-    };
+    const handleCartUpdate = () => loadCounts();
+    const handleWishlistUpdate = () => loadCounts();
 
     window.addEventListener(AUTH_EVENT, handleAuthChange);
     window.addEventListener("cart-updated", handleCartUpdate);
@@ -134,9 +120,6 @@ export default function Navbar() {
     };
   }, []);
 
-  /*
-   * Logout.
-   */
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     setAuthToken(null);
@@ -145,9 +128,6 @@ export default function Navbar() {
     router.push("/");
   };
 
-  /*
-   * Close mobile menu.
-   */
   const closeMobileMenu = () => {
     setMenuOpen(false);
     setLanguageOpen(false);
@@ -158,30 +138,22 @@ export default function Navbar() {
       {/* Navbar Container */}
       <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
         {/* Logo */}
-        <Link
-          href="/"
-          className="text-2xl font-bold hover:scale-105 transition-all duration-300"
-          style={{ color: BRAND.color }}
-        >
+        <Link href="/" className="text-2xl font-bold hover:scale-105 transition-all duration-300" style={{ color: BRAND.color }}>
           {BRAND.name}
         </Link>
 
-        {/* ================= DESKTOP NAVIGATION ================= */}
-        <div className="hidden md:flex items-center gap-6">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-gray-700 hover:text-[#A85838] transition-colors duration-300"
-            >
+            <Link key={link.href} href={link.href} className="text-gray-700 hover:text-[#C9A227] transition-colors duration-300">
               {t(link.label)}
             </Link>
           ))}
+        </div>
 
-          {/* Desktop Search */}
-          <SearchForm desktop />
-
-          {/* Desktop Language Selector */}
+        {/* Desktop Buttons */}
+        <div className="hidden md:flex items-center gap-4">
+          {/* Language Selector */}
           <LanguageSelector
             language={language}
             languages={languages}
@@ -189,23 +161,22 @@ export default function Navbar() {
             setLanguageOpen={setLanguageOpen}
             changeLanguage={changeLanguage}
           />
+          {/* Auth & Counts */}
+          <div className="hidden md:flex items-center gap-3">
+            {isAuth ? (
+              <LoggedInDesktop
+                user={user}
+                onLogout={handleLogout}
+                cartCount={cartCount}
+                wishlistCount={wishlistCount}
+              />
+            ) : (
+              <LoggedOutDesktop />
+            )}
+          </div>
         </div>
 
-        {/* ================= DESKTOP AUTH & COUNTS ================= */}
-        <div className="hidden md:flex items-center gap-3">
-          {user ? (
-            <LoggedInDesktop
-              user={user}
-              onLogout={handleLogout}
-              cartCount={cartCount}
-              wishlistCount={wishlistCount}
-            />
-          ) : (
-            <LoggedOutDesktop />
-          )}
-        </div>
-
-        {/* ================= MOBILE MENU BUTTON ================= */}
+        {/* Mobile Menu Button */}
         <button
           type="button"
           className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -214,70 +185,33 @@ export default function Navbar() {
           aria-expanded={menuOpen}
         >
           {menuOpen ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-7 h-7"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-7 h-7"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           )}
         </button>
       </div>
 
-      {/* ================= MOBILE MENU ================= */}
+      {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden flex flex-col gap-4 px-8 py-4 bg-white border-t border-gray-200 text-gray-800">
-          {/* Mobile Search */}
-          <SearchForm />
-
-          {/* Mobile Navigation */}
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={closeMobileMenu}
-              className="text-gray-800 hover:text-[#A85838] transition-colors"
-            >
-              {t(link.label)}
-            </Link>
-          ))}
-
-          {/* Mobile Language Selector */}
-          <MobileLanguageSelector
+          <LanguageSelector
             language={language}
             languages={languages}
             languageOpen={languageOpen}
             setLanguageOpen={setLanguageOpen}
             changeLanguage={changeLanguage}
           />
-
-          <hr />
-
-          {/* Mobile Authentication */}
-          {user ? (
+          {NAV_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} onClick={closeMobileMenu} className="text-gray-800 hover:text-[#C9A227] transition-colors">
+              {t(link.label)}
+            </Link>
+          ))}
+          {isAuth ? (
             <LoggedInMobile
               onLogout={handleLogout}
               onClose={closeMobileMenu}
@@ -353,9 +287,7 @@ function LanguageSelector({
         <span className="text-sm font-medium">{languages[language]}</span>
         <ChevronDown
           size={16}
-          className={`transition-transform duration-200 ${
-            languageOpen ? "rotate-180" : ""
-          }`}
+          className={`transition-transform duration-200 ${languageOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -388,99 +320,15 @@ function LanguageSelector({
 }
 
 /* ============================================================
-   MOBILE - LANGUAGE SELECTOR
-   ============================================================ */
-
-function MobileLanguageSelector({
-  language,
-  languages,
-  languageOpen,
-  setLanguageOpen,
-  changeLanguage,
-}) {
-  const handleLanguageChange = (newLanguage) => {
-    changeLanguage(newLanguage);
-    setLanguageOpen(false);
-  };
-
-  return (
-    <div className="w-full">
-
-      {/* Mobile Language Button */}
-      <button
-        type="button"
-        onClick={() => setLanguageOpen((previous) => !previous)}
-        className="w-full flex items-center justify-between py-2 text-gray-800 hover:text-[#A85838] transition-colors"
-        aria-label="Select language"
-        aria-haspopup="listbox"
-        aria-expanded={languageOpen}
-      >
-        <span className="flex items-center gap-3">
-          <Globe size={20} />
-          <span>Language</span>
-        </span>
-
-        <span className="flex items-center gap-2 text-sm text-gray-500">
-          {languages[language]}
-
-          <ChevronDown
-            size={16}
-            className={`transition-transform duration-200 ${
-              languageOpen ? "rotate-180" : ""
-            }`}
-          />
-        </span>
-      </button>
-
-      {/* Mobile Language Options */}
-      {languageOpen && (
-        <div
-          className="mt-2 ml-8 rounded-lg border border-[#e3d4b5] bg-[#fffdf8] py-1"
-          role="listbox"
-          aria-label="Select language"
-        >
-          {Object.entries(languages).map(([code, name]) => (
-            <button
-              key={code}
-              type="button"
-              onClick={() => handleLanguageChange(code)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:text-[#A85838] hover:bg-white transition-colors"
-              role="option"
-              aria-selected={language === code}
-            >
-              <span>{name}</span>
-
-              {language === code && (
-                <Check
-                  size={17}
-                  className="text-[#A85838]"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-/* ============================================================
    DESKTOP - LOGGED IN (with counts)
    ============================================================ */
 function LoggedInDesktop({ user, onLogout, cartCount, wishlistCount }) {
   return (
     <div className="flex items-center gap-3">
-      <Link
-        href="/wishlist"
-        className="text-gray-700 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/wishlist" className="text-gray-700 hover:text-[#C9A227] transition-colors">
         ♡ Wishlist {wishlistCount !== null && `(${wishlistCount})`}
       </Link>
-      <Link
-        href="/cart"
-        className="text-gray-700 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/cart" className="text-gray-700 hover:text-[#C9A227] transition-colors">
         🛒 Cart {cartCount !== null && `(${cartCount})`}
       </Link>
       <Link
@@ -491,11 +339,7 @@ function LoggedInDesktop({ user, onLogout, cartCount, wishlistCount }) {
       >
         <User size={20} />
       </Link>
-      <button
-        type="button"
-        onClick={onLogout}
-        className="text-gray-700 font-medium hover:text-red-600 transition-colors"
-      >
+      <button type="button" onClick={onLogout} className="text-gray-700 font-medium hover:text-red-600 transition-colors">
         Logout
       </button>
     </div>
@@ -508,16 +352,10 @@ function LoggedInDesktop({ user, onLogout, cartCount, wishlistCount }) {
 function LoggedOutDesktop() {
   return (
     <>
-      <Link
-        href="/login"
-        className="flex items-center justify-center h-10 px-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#A85838] transition-all duration-300"
-      >
+      <Link href="/login" className="flex items-center justify-center h-10 px-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#C9A227] transition-all duration-300">
         Login
       </Link>
-      <Link
-        href="/signup"
-        className="flex items-center justify-center h-10 px-5 rounded-xl bg-[#A85838] text-white font-medium hover:bg-[#B8860B] transition-all duration-300 hover:scale-105"
-      >
+      <Link href="/signup" className="flex items-center justify-center h-10 px-5 rounded-xl bg-[#C9A227] text-white font-medium hover:bg-[#B8860B] transition-all duration-300 hover:scale-105">
         Sign Up
       </Link>
     </>
@@ -530,33 +368,17 @@ function LoggedOutDesktop() {
 function LoggedInMobile({ onLogout, onClose, cartCount, wishlistCount }) {
   return (
     <>
-      <Link
-        href="/wishlist"
-        onClick={onClose}
-        className="text-gray-800 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/wishlist" onClick={onClose} className="text-gray-800 hover:text-[#C9A227] transition-colors">
         ♡ Wishlist {wishlistCount !== null && `(${wishlistCount})`}
       </Link>
-      <Link
-        href="/cart"
-        onClick={onClose}
-        className="text-gray-800 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/cart" onClick={onClose} className="text-gray-800 hover:text-[#C9A227] transition-colors">
         🛒 Cart {cartCount !== null && `(${cartCount})`}
       </Link>
-      <Link
-        href="/profile"
-        onClick={onClose}
-        className="flex items-center gap-3 text-gray-800 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/profile" onClick={onClose} className="flex items-center gap-3 text-gray-800 hover:text-[#C9A227] transition-colors">
         <User size={20} />
         <span>My Profile</span>
       </Link>
-      <button
-        type="button"
-        onClick={onLogout}
-        className="text-left text-red-600 hover:text-red-700 transition-colors"
-      >
+      <button type="button" onClick={() => { onClose(); onLogout(); }} className="text-left text-red-600 hover:text-red-700 transition-colors">
         Logout
       </button>
     </>
@@ -569,18 +391,10 @@ function LoggedInMobile({ onLogout, onClose, cartCount, wishlistCount }) {
 function LoggedOutMobile({ onClose }) {
   return (
     <>
-      <Link
-        href="/login"
-        onClick={onClose}
-        className="text-gray-800 hover:text-[#A85838] transition-colors"
-      >
+      <Link href="/login" onClick={onClose} className="text-gray-800 hover:text-[#C9A227] transition-colors">
         Login
       </Link>
-      <Link
-        href="/signup"
-        onClick={onClose}
-        className="bg-[#A85838] text-white py-2 rounded-lg text-center hover:bg-[#B8860B] transition-colors"
-      >
+      <Link href="/signup" onClick={onClose} className="bg-[#C9A227] text-white py-2 rounded-lg text-center hover:bg-[#B8860B] transition-colors">
         Sign Up
       </Link>
     </>
