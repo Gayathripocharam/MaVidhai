@@ -9,50 +9,99 @@ const products = [
     id: 1,
     name: "Pink Floral Cotton Saree",
     price: 1499,
-    image: "/sarees/saree-1.png",
     category: "Cotton Sarees",
+
+    // Reusable product media structure
+    media: [
+      {
+        type: "image",
+        src: "/sarees/saree-1.png",
+      },
+      {
+        type: "video",
+        src: "/sarees/saree-1.mp4",
+      },
+    ],
+
     description:
       "A vibrant pink cotton saree featuring beautiful floral prints, delicate tassel detailing, and a subtle golden border. A stylish and comfortable choice for festive and casual occasions.",
+
     variants: ["Free Size"],
   },
+
   {
     id: 2,
     name: "Olive Green Lotus Saree",
     price: 1699,
-    image: "/sarees/saree-2.png",
     category: "Handloom Sarees",
+
+    media: [
+      {
+        type: "image",
+        src: "/sarees/saree-2.png",
+      },
+    ],
+
     description:
       "A beautiful olive green saree featuring traditional lotus motifs with a contrasting white floral border and elegant tassel detailing. Perfect for a graceful ethnic look.",
+
     variants: ["Free Size"],
   },
+
   {
     id: 3,
     name: "White Bird Print Saree",
     price: 1599,
-    image: "/sarees/saree-3.png",
     category: "Cotton Sarees",
+
+    media: [
+      {
+        type: "image",
+        src: "/sarees/saree-3.png",
+      },
+    ],
+
     description:
       "An elegant white saree featuring artistic bird prints, black tassel detailing, and a traditional contrasting border. A simple and sophisticated choice for everyday and special occasions.",
+
     variants: ["Free Size"],
   },
+
   {
     id: 4,
     name: "Parrot Green Cotton Saree",
     price: 1499,
-    image: "/sarees/saree-4.png",
     category: "Cotton Sarees",
+
+    media: [
+      {
+        type: "image",
+        src: "/sarees/saree-4.png",
+      },
+    ],
+
     description:
       "A vibrant parrot green cotton saree featuring colorful parrot motifs and a traditional golden border. A comfortable and eye-catching choice for everyday wear and casual occasions.",
+
     variants: ["Free Size"],
   },
+
   {
     id: 5,
     name: "Mustard Floral Saree",
     price: 1599,
-    image: "/sarees/saree-5.png",
     category: "Handloom Sarees",
+
+    media: [
+      {
+        type: "image",
+        src: "/sarees/saree-5.png",
+      },
+    ],
+
     description:
       "A warm mustard saree featuring traditional floral motifs, a contrasting border, and matching tassel detailing. An elegant addition to a traditional wardrobe.",
+
     variants: ["Free Size"],
   },
 ];
@@ -68,6 +117,9 @@ export default function ProductDetailsPage() {
   );
 
   const [quantity, setQuantity] = useState(1);
+
+  // Keeps track of which image/video is currently displayed
+  const [selectedMedia, setSelectedMedia] = useState(0);
 
   const increaseQuantity = () => {
     setQuantity((current) => current + 1);
@@ -90,6 +142,7 @@ export default function ProductDetailsPage() {
     alert(`${product.name} added to cart!`);
   };
 
+  // Product not found
   if (!product) {
     return (
       <main className="min-h-screen bg-[#FAF8F3] px-4 py-10">
@@ -112,6 +165,34 @@ export default function ProductDetailsPage() {
       </main>
     );
   }
+
+  /*
+   * Move to previous product media
+   */
+  const showPreviousMedia = () => {
+    setSelectedMedia((current) => {
+      if (current === 0) {
+        return product.media.length - 1;
+      }
+
+      return current - 1;
+    });
+  };
+
+  /*
+   * Move to next product media
+   */
+  const showNextMedia = () => {
+    setSelectedMedia((current) => {
+      if (current === product.media.length - 1) {
+        return 0;
+      }
+
+      return current + 1;
+    });
+  };
+
+  const currentMedia = product.media[selectedMedia];
 
   return (
     <main className="min-h-screen bg-[#FAF8F3] px-4 py-10">
@@ -145,13 +226,91 @@ export default function ProductDetailsPage() {
         {/* Product Details */}
         <div className="grid gap-10 rounded-2xl bg-white p-6 shadow-lg md:grid-cols-2 md:p-10">
 
-          {/* Product Image */}
-          <div className="flex min-h-[400px] items-center justify-center rounded-xl bg-gray-50 p-6">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-auto max-h-[550px] w-full rounded-xl object-contain"
-            />
+          {/* Product Media */}
+          <div className="relative flex min-h-[550px] items-center justify-center rounded-xl bg-gray-50 p-6">
+
+            {/* Previous Arrow */}
+            {product.media.length > 1 && (
+              <button
+                type="button"
+                onClick={showPreviousMedia}
+                className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-2xl text-gray-700 shadow-md transition hover:bg-gray-100 hover:shadow-lg"
+                aria-label="Previous product media"
+              >
+                ←
+              </button>
+            )}
+
+            {/* Current Product Image */}
+            {currentMedia.type === "image" && (
+              <img
+                src={currentMedia.src}
+                alt={product.name}
+                className="h-auto max-h-[550px] w-full rounded-xl object-contain"
+              />
+            )}
+
+            {/* Current Product Video */}
+            {currentMedia.type === "video" && (
+              <video
+                key={currentMedia.src}
+                controls
+                muted
+                loop
+                playsInline
+                poster={product.media[0]?.src}
+                className="h-auto max-h-[550px] w-full rounded-xl object-contain"
+              >
+                <source
+                  src={currentMedia.src}
+                  type="video/mp4"
+                />
+
+                Your browser does not support the video tag.
+              </video>
+            )}
+
+            {/* Product Video Indicator */}
+            {currentMedia.type === "video" && (
+              <div className="absolute left-8 top-8 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white shadow-md backdrop-blur-sm">
+                ▶ Product Video
+              </div>
+            )}
+
+            {/* Next Arrow */}
+            {product.media.length > 1 && (
+              <button
+                type="button"
+                onClick={showNextMedia}
+                className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-2xl text-gray-700 shadow-md transition hover:bg-gray-100 hover:shadow-lg"
+                aria-label="Next product media"
+              >
+                →
+              </button>
+            )}
+
+            {/* Media Indicators */}
+            {product.media.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2">
+                {product.media.map((media, index) => (
+                  <button
+                    key={`${media.type}-${index}`}
+                    type="button"
+                    onClick={() => setSelectedMedia(index)}
+                    className={`rounded-full transition-all duration-300 ${
+                      selectedMedia === index
+                        ? "h-3 w-3 bg-[#C9A227]"
+                        : "h-2.5 w-2.5 bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={
+                      media.type === "video"
+                        ? "Show product video"
+                        : `Show product image ${index + 1}`
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Information */}
