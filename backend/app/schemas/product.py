@@ -5,32 +5,32 @@ from app.schemas.category import CategoryResponse
 
 class ProductCreate(BaseModel):
     category_id: int
-    name: str = Field(..., min_length=1)
-    slug: str = Field(..., min_length=1)
+    name: str = Field(..., min_length=1, max_length=200)
+    slug: str = Field(..., min_length=1, max_length=200)
     price: Decimal = Field(..., gt=0)
-    description: str | None = None
-    details: str | None = None
-    material: str | None = None
-    dimensions: str | None = None
-    colour: str | None = None
-    care: str | None = None
-    badge: str | None = None
+    description: str | None = Field(None, max_length=5000)
+    details: str | None = Field(None, max_length=2000)
+    material: str | None = Field(None, max_length=500)
+    dimensions: str | None = Field(None, max_length=500)
+    colour: str | None = Field(None, max_length=100)
+    care: str | None = Field(None, max_length=1000)
+    badge: str | None = Field(None, max_length=100)
     availability: bool = True
     stock: int = Field(0, ge=0)
     image_url: str | None = None
 
 class ProductUpdate(BaseModel):
     category_id: int | None = None
-    name: str | None = Field(None, min_length=1)
-    slug: str | None = Field(None, min_length=1)
+    name: str | None = Field(None, min_length=1, max_length=200)
+    slug: str | None = Field(None, min_length=1, max_length=200)
     price: Decimal | None = Field(None, gt=0)
-    description: str | None = None
-    details: str | None = None
-    material: str | None = None
-    dimensions: str | None = None
-    colour: str | None = None
-    care: str | None = None
-    badge: str | None = None
+    description: str | None = Field(None, max_length=5000)
+    details: str | None = Field(None, max_length=2000)
+    material: str | None = Field(None, max_length=500)
+    dimensions: str | None = Field(None, max_length=500)
+    colour: str | None = Field(None, max_length=100)
+    care: str | None = Field(None, max_length=1000)
+    badge: str | None = Field(None, max_length=100)
     availability: bool | None = None
     # stock is specifically excluded here to enforce delta-based adjustments
     image_url: str | None = None
