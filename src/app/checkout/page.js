@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCart, createOrder, setAuthToken, getAuthToken } from "@/lib/api";
+import { getCart, createOrder, setAuthToken, getAuthToken, getOrder, createPayment } from "@/lib/api";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -59,15 +59,8 @@ export default function CheckoutPage() {
     if (createdOrder && !isSuccess) {
       interval = setInterval(async () => {
         try {
-          const token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
-          if (!token) return;
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/orders/${createdOrder.order_number}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (res.ok) {
-            const data = await res.json();
+          const data = await getOrder(createdOrder.order_number);
+          if (data) {
             if (data.status === "confirmed" || data.status === "inventory_conflict" || data.payment_status === "captured") {
               setIsSuccess(true);
               setCreatedOrder(data);
@@ -98,22 +91,7 @@ export default function CheckoutPage() {
       setCreatedOrder(order);
 
       // 2. Create Payment
-      const token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
-      const paymentRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/payments/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ order_number: order.order_number }),
-      });
-      
-      if (!paymentRes.ok) {
-        const errorData = await paymentRes.json();
-        throw new Error(errorData.detail || "Failed to create payment");
-      }
-      
-      const pData = await paymentRes.json();
+      const pData = await createPayment(order.order_number);
       setPaymentData(pData);
       
     } catch (err) {
