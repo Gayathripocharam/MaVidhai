@@ -89,7 +89,9 @@ export function setAuthToken(token) {
 
 export function getAuthToken() {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("mavidhai_token");
+    const token = localStorage.getItem("mavidhai_token");
+    if (token === "null" || token === "undefined") return null;
+    return token;
   }
   return null;
 }
@@ -107,7 +109,10 @@ export async function getCurrentUser() {
 }
 function getAuthHeaders() {
   const token = getAuthToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (!token) {
+    throw new Error("Unauthorized");
+  }
+  return { Authorization: `Bearer ${token}` };
 }
 
 export async function login(email, password) {
