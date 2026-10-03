@@ -1,54 +1,123 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-const AUTH_TOKEN_KEY = "mavidhai_auth_token";
-const USER_KEY = "mavidhai_user";
-
-// --- Token & Storage Utilities ---
-
-export function getAuthToken() {
-  if (typeof window === "undefined") return null;
-
-  return (
-    localStorage.getItem(AUTH_TOKEN_KEY) ||
-    localStorage.getItem("admin_token") ||
-    null
-  );
-}
-
-export function setAuthToken(token) {
-  if (typeof window === "undefined") return;
-
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-  } else {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem("admin_token");
-  }
-}
-
-export function getCurrentUser() {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
+function getAuthToken() {
+  if (typeof window === "undefined") {
     return null;
   }
-}
 
-export function setCurrentUser(user) {
-  if (typeof window === "undefined") return;
+  const token = localStorage.getItem("mavidhai_token");
 
-  if (user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(USER_KEY);
+  if (!token || token === "null" || token === "undefined") {
+    return null;
   }
+
+  return token;
 }
 
-// --- Customer Store Endpoints ---
+function getAuthHeaders() {
+  const token = getAuthToken();
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function request(endpoint, options = {}) {
+  const token = getAuthToken();
+
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  if (!headers["Content-Type"] && options.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token && !headers.Authorization) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+
+      if (typeof errorData?.detail === "string") {
+        message = errorData.detail;
+      } else if (typeof errorData?.message === "string") {
+        message = errorData.message;
+      }
+    } catch {
+      // Keep the default error message.
+    }
+
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("mavidhai_token");
+      }
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
+}
+
+export const api = {
+  get: (endpoint, options) =>
+    request(endpoint, {
+      ...options,
+      method: "GET",
+    }),
+
+  post: (endpoint, body, options) =>
+    request(endpoint, {
+      ...options,
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  put: (endpoint, body, options) =>
+    request(endpoint, {
+      ...options,
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
+  patch: (endpoint, body, options) =>
+    request(endpoint, {
+      ...options,
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  delete: (endpoint, options) =>
+    request(endpoint, {
+      ...options,
+      method: "DELETE",
+    }),
+};
+
+// -------------------------------------------------------------
+// Customer / Store Methods
+// -------------------------------------------------------------
+
+
 
 export async function getProducts(filters = {}, signal) {
   const params = new URLSearchParams();
@@ -93,218 +162,112 @@ export async function getProducts(filters = {}, signal) {
   return await res.json();
 }
 
-export async function getCart() {
-  if (typeof window === "undefined") {
-    return { items: [] };
-  }
-
-  try {
-    const raw = localStorage.getItem("mavidhai_cart");
-
-    return raw ? JSON.parse(raw) : { items: [] };
-  } catch {
-    return { items: [] };
-  }
-}
-
 export async function getWishlist() {
-  if (typeof window === "undefined") {
-    return { items: [] };
+  const response = await fetch(`${API_BASE_URL}/api/wishlist`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Unauthorized");
+    }
+
+    throw new Error("Failed to fetch wishlist");
   }
 
-  try {
-    const raw = localStorage.getItem("mavidhai_wishlist");
+  return response.json();
+}
 
-    return raw ? JSON.parse(raw) : { items: [] };
-  } catch {
-    return { items: [] };
+export async function removeFromWishlist(itemId) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/wishlist/items/${itemId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Unauthorized");
+    }
+
+    throw new Error("Failed to remove wishlist item");
+  }
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("wishlist-updated"));
+  }
+
+  return response.json();
+}
+
+export function setAuthToken(token) {
+  if (typeof window !== "undefined") {
+    if (token) {
+      localStorage.setItem("mavidhai_token", token);
+    } else {
+      localStorage.removeItem("mavidhai_token");
+    }
+
+    window.dispatchEvent(new Event("auth-changed"));
   }
 }
 
-// --- Authentication ---
+export async function getCurrentUser() {
+  const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Unauthorized");
+    }
+
+    throw new Error("Failed to fetch current user");
+  }
+
+  return response.json();
+}
 
 export async function login(email, password) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  });
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
+  const data = await response.json().catch(() => null);
 
-      throw new Error(
-        errorData.detail ||
-          errorData.message ||
-          "Login failed"
-      );
-    }
-
-    const data = await res.json();
-
-    if (data.token || data.access_token) {
-      setAuthToken(data.token || data.access_token);
-    }
-
-    if (data.user) {
-      setCurrentUser(data.user);
-    }
-
-    return data;
-  } catch (err) {
-    console.error("Login error:", err);
-    throw err;
+  if (!response.ok) {
+    throw new Error(data?.message || data?.detail || "Invalid credentials");
   }
+
+  if (data?.token) {
+    setAuthToken(data.token);
+  }
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(
+      "mavidhai_user",
+      JSON.stringify(data?.user || data)
+    );
+  }
+
+  return data;
 }
 
-// --- Authenticated API Client ---
-
-async function request(endpoint, options = {}) {
-  console.log("API BASE URL:", API_BASE_URL);
-  const token = getAuthToken();
-
-  const headers = {
-    "Content-Type": "application/json",
-
-    ...(token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}),
-
-    ...options.headers,
-  };
-
-  const config = {
-    ...options,
-    headers,
-  };
-
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}${endpoint}`,
-      config
-    );
-
-    // Authentication / authorization handling
-    if (
-      response.status === 401 ||
-      response.status === 403
-    ) {
-      if (
-        typeof window !== "undefined" &&
-        window.location.pathname.startsWith("/admin")
-      ) {
-        window.location.href = "/login";
-      }
-    }
-
-    if (!response.ok) {
-      const errorBody = await response
-        .json()
-        .catch(() => ({}));
-
-      throw new Error(
-        errorBody.detail ||
-          errorBody.message ||
-          `API Error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    /*
-     * Some DELETE/PATCH/PUT endpoints may return
-     * an empty response body.
-     */
-    const text = await response.text();
-
-    if (!text) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
-  } catch (error) {
-    console.error(
-      `Request to ${endpoint} failed:`,
-      error
-    );
-
-    throw error;
-  }
-}
-
-// --- API Methods ---
-
-export const api = {
-  get: (url, options) =>
-    request(url, {
-      ...options,
-      method: "GET",
-    }),
-
-  post: (url, body, options) =>
-    request(url, {
-      ...options,
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  put: (url, body, options) =>
-    request(url, {
-      ...options,
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
-
-  patch: (url, body, options) =>
-    request(url, {
-      ...options,
-      method: "PATCH",
-      body: JSON.stringify(body),
-    }),
-
-  delete: (url, options) =>
-    request(url, {
-      ...options,
-      method: "DELETE",
-    }),
-};
-
-// Named exports used by existing pages
+// -------------------------------------------------------------
+// Convenience API methods
+// -------------------------------------------------------------
 
 export const get = api.get;
 export const post = api.post;
 export const put = api.put;
 export const patch = api.patch;
 export const del = api.delete;
-
-export async function addToCart(productId, quantity = 1) {
-  return api.post("/api/cart/items", {
-    product_id: productId,
-    quantity,
-  });
-}
-
-export async function updateCartItem(itemId, quantity) {
-  return api.patch(`/api/cart/items/${itemId}`, {
-    quantity,
-  });
-}
-
-export async function removeCartItem(itemId) {
-  return api.delete(`/api/cart/items/${itemId}`);
-}
-
-export async function removeFromWishlist(itemId) {
-  return api.delete(`/api/wishlist/items/${itemId}`);
-}
-
