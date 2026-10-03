@@ -100,17 +100,22 @@ function ShopContent() {
   // FILTER HANDLERS
   // =========================================================
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (categoryName) => {
+    const slug =
+      categoryName === "All"
+        ? ""
+        : categoryName.toLowerCase().replace(" ", "-");
+
     setFilters((prev) => ({
       ...prev,
-      category: category.slug,
+      category: slug,
     }));
 
     setPagination((prev) => ({
       ...prev,
       page: 1,
     }));
-};
+  };
 
   const handlePriceChange = (min, max) => {
     setFilters((prev) => ({

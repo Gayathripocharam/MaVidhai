@@ -25,6 +25,10 @@ def auth_headers_user1(test_db: Session) -> Dict[str, str]:
     # Clear orders and payments for clean state
     user = test_db.query(User).filter(User.email == "userpay1@example.com").first()
     if user:
+        from app.models.inventory_audit import InventoryAudit
+        from app.models.order import OrderItem
+        test_db.query(InventoryAudit).filter(InventoryAudit.order.has(user_id=user.id)).delete(synchronize_session=False)
+        test_db.query(OrderItem).filter(OrderItem.order.has(user_id=user.id)).delete(synchronize_session=False)
         test_db.query(Payment).filter(Payment.order.has(user_id=user.id)).delete(synchronize_session=False)
         test_db.query(Order).filter(Order.user_id == user.id).delete(synchronize_session=False)
         test_db.commit()
@@ -89,6 +93,14 @@ def sample_pending_order(auth_headers_user1, test_db: Session):
 
 def test_unauthenticated_payment():
     response = client.post("/api/payments/create", json={"order_number": "MVD-TEST-123"})
+    assert response.status_code == 401
+
+def test_unauthenticated_payment_bearer_null():
+    response = client.post("/api/payments/create", json={"order_number": "MVD-TEST-123"}, headers={"Authorization": "Bearer null"})
+    assert response.status_code == 401
+
+def test_unauthenticated_payment_bearer_undefined():
+    response = client.post("/api/payments/create", json={"order_number": "MVD-TEST-123"}, headers={"Authorization": "Bearer undefined"})
     assert response.status_code == 401
 
 @patch("app.services.payment_service.payment_provider.create_payment_link")
