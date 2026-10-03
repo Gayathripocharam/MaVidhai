@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   Search,
   AlertTriangle,
@@ -11,6 +12,7 @@ import {
   Package,
   ArrowUpDown,
 } from "lucide-react";
+import { get, patch } from "@/lib/api";
 
 const INITIAL_INVENTORY = [
   {
@@ -34,9 +36,32 @@ const INITIAL_INVENTORY = [
 ];
 
 export default function AdminInventoryPage() {
-  const [inventory, setInventory] = useState(INITIAL_INVENTORY);
+ const [inventory, setInventory] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  useEffect(() => {
+  const loadInventory = async () => {
+    try {
+      const data = await get("/api/admin/inventory");
+      console.log("INVENTORY API DATA:", data);
+      setInventory(
+  (Array.isArray(data) ? data : data.items || []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    sku: item.slug,
+    category: `Category ${item.category_id}`,
+    currentStock: item.stock,
+    minThreshold: 5,
+    lastUpdated: "-",
+  }))
+);
+    } catch (error) {
+      console.error("Failed to load inventory:", error);
+    }
+  };
+
+  loadInventory();
+}, []);
 
   // Quick Edit Stock Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,9 +95,24 @@ export default function AdminInventoryPage() {
     setIsModalOpen(true);
   };
 
-  const handleStockUpdate = (e) => {
+  const handleStockUpdate = async (e) => {
     e.preventDefault();
     if (!selectedItem) return;
+    try {
+  await patch("/api/admin/inventory/bulk-adjust", {
+    items: [
+      {
+        product_id: selectedItem.id,
+        delta: Number(adjustAmount),
+        reason: "Manual stock adjustment",
+      },
+    ],
+  });
+} catch (error) {
+  console.error("Failed to update stock:", error);
+  alert(error.message || "Failed to update stock.");
+  return;
+}
 
     setInventory((prev) =>
       prev.map((item) =>

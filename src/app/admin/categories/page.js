@@ -1,7 +1,7 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search, Edit2, Trash2, Tags, X, AlertCircle } from "lucide-react";
+import { get, post, put, del } from "@/lib/api";
 
 const INITIAL_CATEGORIES = [
   {
@@ -28,7 +28,20 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const data = await get("/api/admin/categories");
+
+      setCategories(Array.isArray(data) ? data : data.items || []);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  };
+
+  loadCategories();
+}, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -53,32 +66,64 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm("Are you sure you want to remove this category?")) {
-      setCategories((prev) => prev.filter((item) => item.id !== id));
-    }
-  };
+  const handleDelete = async (id) => {
+  if (!confirm("Are you sure you want to remove this category?")) {
+    return;
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  try {
+    await del(`/api/admin/categories/${id}`);
+
+    setCategories((prev) =>
+      prev.filter((item) => item.id !== id)
+    );
+  } catch (error) {
+    console.error("Failed to delete category:", error);
+    alert(error.message || "Failed to delete category.");
+  }
+};
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+
+  try {
     if (editingCategory) {
+      // UPDATE existing category
+      const updatedCategory = await put(
+        `/api/admin/categories/${editingCategory.id}`,
+        {
+          name: formData.name,
+          description: formData.description,
+        }
+      );
+
       setCategories((prev) =>
-        prev.map((c) =>
-          c.id === editingCategory.id ? { ...c, ...formData } : c
+        prev.map((category) =>
+          category.id === editingCategory.id
+            ? updatedCategory
+            : category
         )
       );
     } else {
-      const newCategory = {
-        id: `cat_${Date.now()}`,
-        ...formData,
-        productCount: 0,
-        isActive: true,
-      };
-      setCategories((prev) => [...prev, newCategory]);
-    }
-    setIsModalOpen(false);
-  };
+ const newCategory = await post("/api/admin/categories", {
+  name: formData.name,
+  slug: formData.name.trim().toLowerCase().replace(/\s+/g, "-"),
+});
 
+  setCategories((prev) => [...prev, newCategory]);
+}
+    setIsModalOpen(false);
+    setEditingCategory(null);
+    setFormData({
+      name: "",
+      description: "",
+    });
+  } catch (error) {
+    console.error("Category operation failed:", error);
+    alert(error.message || "Failed to save category.");
+  }
+};
   return (
     <main className="min-h-screen bg-[#F8F6F2] text-[#1D1D1B]">
       {/* Desktop Header */}

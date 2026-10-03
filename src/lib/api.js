@@ -50,20 +50,47 @@ export function setCurrentUser(user) {
 
 // --- Customer Store Endpoints ---
 
-export async function getProducts() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/products`, {
-      cache: "no-store",
-    });
+export async function getProducts(filters = {}, signal) {
+  const params = new URLSearchParams();
 
-    if (!res.ok) {
-      return [];
-    }
-
-    return await res.json();
-  } catch {
-    return [];
+  if (filters.search) {
+    params.set("search", filters.search);
   }
+
+  if (filters.category) {
+    params.set("category", filters.category);
+  }
+
+  if (filters.minPrice !== "" && filters.minPrice != null) {
+    params.set("min_price", filters.minPrice);
+  }
+
+  if (filters.maxPrice !== "" && filters.maxPrice != null) {
+    params.set("max_price", filters.maxPrice);
+  }
+
+  if (filters.available) {
+    params.set("available", "true");
+  }
+
+  params.set("page", String(filters.page || 1));
+  params.set("limit", String(filters.limit || 20));
+
+  const query = params.toString();
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/products${query ? `?${query}` : ""}`,
+    {
+      cache: "no-store",
+      signal,
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch products: ${res.status}`);
+  }
+
+  return await res.json();
 }
 
 export async function getCart() {
@@ -94,6 +121,8 @@ export async function getWishlist() {
   }
 }
 
+// --- Authentication ---
+
 export async function login(email, password) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -120,9 +149,7 @@ export async function login(email, password) {
     const data = await res.json();
 
     if (data.token || data.access_token) {
-      setAuthToken(
-        data.token || data.access_token
-      );
+      setAuthToken(data.token || data.access_token);
     }
 
     if (data.user) {
@@ -132,26 +159,14 @@ export async function login(email, password) {
     return data;
   } catch (err) {
     console.error("Login error:", err);
-
-    /*
-     * Existing project behavior:
-     * fallback to mock login when backend is unavailable.
-     *
-     * This should eventually be removed when
-     * production authentication is fully connected.
-     */
-    setCurrentUser({ email });
-
-    return {
-      user: { email },
-      token: "mock_token",
-    };
+    throw err;
   }
 }
 
 // --- Authenticated API Client ---
 
 async function request(endpoint, options = {}) {
+  console.log("API BASE URL:", API_BASE_URL);
   const token = getAuthToken();
 
   const headers = {
@@ -186,7 +201,7 @@ async function request(endpoint, options = {}) {
         typeof window !== "undefined" &&
         window.location.pathname.startsWith("/admin")
       ) {
-        window.location.href = "/admin/login";
+        window.location.href = "/login";
       }
     }
 
@@ -205,9 +220,6 @@ async function request(endpoint, options = {}) {
     /*
      * Some DELETE/PATCH/PUT endpoints may return
      * an empty response body.
-     *
-     * Try JSON first, then return null if there
-     * is no JSON body.
      */
     const text = await response.text();
 
@@ -266,3 +278,33 @@ export const api = {
       method: "DELETE",
     }),
 };
+
+// Named exports used by existing pages
+
+export const get = api.get;
+export const post = api.post;
+export const put = api.put;
+export const patch = api.patch;
+export const del = api.delete;
+
+export async function addToCart(productId, quantity = 1) {
+  return api.post("/api/cart/items", {
+    product_id: productId,
+    quantity,
+  });
+}
+
+export async function updateCartItem(itemId, quantity) {
+  return api.patch(`/api/cart/items/${itemId}`, {
+    quantity,
+  });
+}
+
+export async function removeCartItem(itemId) {
+  return api.delete(`/api/cart/items/${itemId}`);
+}
+
+export async function removeFromWishlist(itemId) {
+  return api.delete(`/api/wishlist/items/${itemId}`);
+}
+
