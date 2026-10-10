@@ -144,7 +144,15 @@ export default function CartPage() {
                   {/* PRODUCT INFO */}
                   <div className="flex items-center gap-6">
                     <div className="flex h-24 w-[4.8rem] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#eadfca] bg-[#f8f2e6]">
-                      <span className="text-[#c99716]">✦</span>
+                      {item.product.image_url || item.product.image ? (
+                        <img
+                          src={item.product.image_url || item.product.image}
+                          alt={item.product.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[#c99716]">✦</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-semibold text-[#29251f]">

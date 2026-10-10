@@ -209,7 +209,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_full_name}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_email}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -235,7 +235,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_phone}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -248,7 +248,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_address_line1}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_address_line2}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -273,7 +273,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_city}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -286,7 +286,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_state}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
                   value={formData.shipping_postal_code}
                   onChange={handleChange}
                   disabled={submitting}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 outline-none focus:border-[#c99716] disabled:opacity-50"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 text-[#29251f] placeholder:text-stone-400 outline-none focus:border-[#c99716] disabled:opacity-50"
                 />
               </div>
 
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
                   required
                   readOnly
                   value={formData.shipping_country}
-                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 bg-[#f9f6f0] outline-none text-[#91887c]"
+                  className="mt-1 block w-full rounded-lg border border-[#e1d7c6] px-4 py-3 bg-[#f9f6f0] outline-none text-[#29251f]"
                 />
               </div>
             </form>
