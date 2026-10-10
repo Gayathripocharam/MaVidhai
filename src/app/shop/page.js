@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { getProducts } from "@/lib/api";
+import { getCategories, getProducts } from "@/lib/api";
 
 import ProductSearch from "@/components/shop/ProductSearch";
 import ProductFilters from "@/components/shop/ProductFilters";
@@ -12,6 +12,7 @@ import Pagination from "@/components/shop/Pagination";
 function ShopContent() {
   /*** State ***/
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -36,6 +37,18 @@ function ShopContent() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCategories(controller.signal)
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("Failed to load shop categories:", err);
+        }
+      });
+    return () => controller.abort();
+  }, []);
 
   // =========================================================
   // LOAD PRODUCTS FROM BACKEND
@@ -100,12 +113,7 @@ function ShopContent() {
   // FILTER HANDLERS
   // =========================================================
 
-  const handleCategoryChange = (categoryName) => {
-    const slug =
-      categoryName === "All"
-        ? ""
-        : categoryName.toLowerCase().replace(" ", "-");
-
+  const handleCategoryChange = (slug) => {
     setFilters((prev) => ({
       ...prev,
       category: slug,
@@ -188,6 +196,7 @@ function ShopContent() {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* FILTER SIDEBAR */}
           <ProductFilters
+            categories={categories}
             filters={filters}
             onCategoryChange={handleCategoryChange}
             onPriceChange={handlePriceChange}

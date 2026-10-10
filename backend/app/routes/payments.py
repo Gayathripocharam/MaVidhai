@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends, status, BackgroundTasks
+import json
+import os
+from fastapi import APIRouter, Depends, status, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.utils.dependencies import get_current_user
 from app.models.user import User
+from app.models.order import Order
+from app.models.payment import Payment
+from app.integrations.razorpay_client import provider as payment_provider
 from app.schemas.payment import PaymentCreateRequest, PaymentCreateResponse, PaymentVerifyRequest, PaymentVerifyResponse
 from app.services import payment_service
+from app.services import payment_webhook_service
 
 router = APIRouter(prefix="/api/payments", tags=["Payments"])
 
@@ -29,6 +35,47 @@ def verify_payment(
     current_user: User = Depends(get_current_user)
 ):
     return payment_service.verify_payment(db=db, user=current_user, data=request)
+
+@router.post("/mock-confirm/{order_number}")
+def mock_confirm_payment(
+    order_number: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Complete a local demo payment through the same webhook processing path."""
+    if os.getenv("ENVIRONMENT", "development") == "production" or payment_provider.client is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    order = db.query(Order).filter(
+        Order.order_number == order_number,
+        Order.user_id == current_user.id,
+    ).first()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    payment = db.query(Payment).filter(Payment.order_id == order.id).order_by(Payment.id.desc()).first()
+    if not payment or payment.status != "created":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No pending demo payment found")
+
+    event_id = f"evt_mock_{payment.id}"
+    payload = {
+        "id": event_id,
+        "event": "payment_link.paid",
+        "payload": {
+            "payment_link": {
+                "entity": {
+                    "id": payment.provider_order_id,
+                    "payment_id": f"pay_mock_{payment.id}",
+                }
+            }
+        },
+    }
+    return payment_webhook_service.process_webhook(
+        db=db,
+        raw_body=json.dumps(payload).encode("utf-8"),
+        signature="valid_webhook_signature",
+        event_id=event_id,
+    )
 
 from fastapi import Request
 from app.services import payment_webhook_service

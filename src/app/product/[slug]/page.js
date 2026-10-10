@@ -79,6 +79,8 @@ export default function ProductPage() {
 
   const isOutOfStock =
     product?.availability === false || product?.stock <= 0;
+  const reviewCount = Number(product?.reviews ?? product?.review_count ?? 0);
+  const hasReviews = reviewCount > 0 && Number(product?.rating) > 0;
 
   const handleAddToCart = async () => {
     if (isAddingToCart || isOutOfStock) return;
@@ -224,33 +226,17 @@ export default function ProductPage() {
           <div className="grid gap-4 sm:grid-cols-[90px_1fr]">
             {/* THUMBNAILS */}
 
-            <div className="order-2 flex max-w-full gap-3 overflow-x-auto pb-1 sm:order-1 sm:flex-col sm:overflow-visible sm:pb-0">
-
-              <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-[#d1a11c] bg-[#f1e8d7]">
-
-                <span className="text-lg text-[#c99716]">
-                  ✦
-                </span>
-
+            {product.image_url || product.image ? (
+              <div className="order-2 flex max-w-full gap-3 overflow-x-auto pb-1 sm:order-1 sm:flex-col sm:overflow-visible sm:pb-0">
+                <div className="h-20 w-20 overflow-hidden rounded-xl border-2 border-[#d1a11c] bg-[#f1e8d7]">
+                  <img
+                    src={product.image_url || product.image}
+                    alt={`${product.name} thumbnail`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               </div>
-
-              <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-[#eadfca] bg-[#f1e8d7]">
-
-                <span className="text-lg text-[#c99716]">
-                  ✦
-                </span>
-
-              </div>
-
-              <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-[#eadfca] bg-[#f1e8d7]">
-
-                <span className="text-lg text-[#c99716]">
-                  ✦
-                </span>
-
-              </div>
-
-            </div>
+            ) : null}
 
             {/* MAIN IMAGE */}
 
@@ -308,25 +294,24 @@ export default function ProductPage() {
             {/* RATING */}
 
             <div className="mt-5 flex items-center gap-3">
-
-              <div className="flex gap-1 text-[#d1a11c]">
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-              </div>
-
-              <span className="text-sm font-medium text-[#5f584f]">
-                {product.rating || "4.8"}
-              </span>
-
-              <Link
-                href="#reviews"
-                className="text-sm text-[#91887c] underline-offset-4 hover:underline"
-              >
-                {product.reviews || 0} reviews
-              </Link>
+              {hasReviews ? (
+                <>
+                  <span className="text-[#d1a11c]" aria-label="Rated">
+                    ★
+                  </span>
+                  <span className="text-sm font-medium text-[#5f584f]">
+                    {product.rating}
+                  </span>
+                  <Link
+                    href="#reviews"
+                    className="text-sm text-[#91887c] underline-offset-4 hover:underline"
+                  >
+                    {reviewCount} reviews
+                  </Link>
+                </>
+              ) : (
+                <span className="text-sm text-[#91887c]">No reviews yet</span>
+              )}
             </div>
 
             {/* PRICE */}
@@ -533,38 +518,14 @@ export default function ProductPage() {
         </section>
       )}
 
-      {/* REVIEWS */}
-      <section
-        id="reviews"
-        className="bg-[#f8f2e6] px-6 py-14 lg:px-10"
-      >
-        <div className="mx-auto max-w-[1100px]">
-          <div className="text-center">
-            <p className="text-xs font-medium uppercase tracking-[3px] text-[#c99716]">
-              Customer feedback
-            </p>
-
-            <h2 className="mt-2 text-2xl font-semibold text-[#29251f]">
-              What customers say
-            </h2>
-          </div>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            <Review
-              name="Ananya R."
-              review="Beautiful craftsmanship and even better in person."
-            />
-
-            <Review
-              name="Meera S."
-              review="The quality feels premium and the packaging was lovely."
-            />
-
-            <Review
-              name="Riya K."
-              review="A beautiful addition to my home. Would definitely recommend."
-            />
-          </div>
+      <section id="reviews" className="bg-[#f8f2e6] px-6 py-10 lg:px-10">
+        <div className="mx-auto max-w-[1100px] text-center">
+          <h2 className="text-xl font-semibold text-[#29251f]">Customer reviews</h2>
+          <p className="mt-2 text-sm text-[#756d63]">
+            {hasReviews
+              ? `${reviewCount} customer reviews`
+              : "No customer reviews yet."}
+          </p>
         </div>
       </section>
 
@@ -639,32 +600,6 @@ function TrustItem({ icon, title, description }) {
 
       <p className="text-[10px] text-[#91887c]">
         {description}
-      </p>
-    </div>
-  );
-}
-
-/* =========================================================
-   REVIEW
-========================================================= */
-
-function Review({ name, review }) {
-  return (
-    <div className="rounded-xl border border-[#eadfca] bg-white p-5">
-      <div className="flex gap-1 text-xs text-[#d1a11c]">
-        ★ ★ ★ ★ ★
-      </div>
-
-      <p className="mt-4 text-sm leading-6 text-[#686159]">
-        “{review}”
-      </p>
-
-      <p className="mt-4 text-xs font-semibold text-[#3b342b]">
-        {name}
-      </p>
-
-      <p className="mt-1 text-[10px] text-[#91887c]">
-        Verified Customer
       </p>
     </div>
   );
